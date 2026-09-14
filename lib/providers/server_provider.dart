@@ -12,7 +12,7 @@ class ServerProvider extends ChangeNotifier {
   String _error = '';
   String _updatedAt = '';
   int _version = 1;
-  Map<String, int> _pings = {}; // server id -> ping ms
+  final Map<String, int> _pings = {}; // server id -> ping ms
 
   List<ServerModel> get servers => _servers;
   List<ServerModel> get freeServers =>

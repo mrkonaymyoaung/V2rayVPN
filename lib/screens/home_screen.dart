@@ -140,10 +140,10 @@ class HomeScreen extends StatelessWidget {
 
                   const SizedBox(height: 30),
 
-                  // Delay / ping display
-                  if (vpn.isConnected && vpn.delay != null)
+                  // Duration display
+                  if (vpn.isConnected)
                     Text(
-                      '${vpn.delay}ms',
+                      vpn.duration,
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF8B95A5),

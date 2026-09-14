@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:flutter_v2ray/flutter_v2ray.dart';
 
 /// Connection status enum
@@ -9,16 +8,20 @@ enum VpnStatus { disconnected, connecting, connected, disconnecting, error }
 class VpnStatusData {
   final VpnStatus status;
   final String message;
-  final int? delay;
-  final int? uploadSpeed;
-  final int? downloadSpeed;
+  final String duration;
+  final int uploadSpeed;
+  final int downloadSpeed;
+  final int upload;
+  final int download;
 
   VpnStatusData({
     required this.status,
     this.message = '',
-    this.delay,
-    this.uploadSpeed,
-    this.downloadSpeed,
+    this.duration = '00:00:00',
+    this.uploadSpeed = 0,
+    this.downloadSpeed = 0,
+    this.upload = 0,
+    this.download = 0,
   });
 }
 
@@ -29,7 +32,6 @@ class VpnService {
 
   FlutterV2ray? _v2ray;
   bool _initialized = false;
-  Timer? _statsTimer;
 
   VpnStatusData _current = VpnStatusData(status: VpnStatus.disconnected);
   VpnStatusData get current => _current;
@@ -44,21 +46,23 @@ class VpnService {
     if (_initialized) return;
     _v2ray = FlutterV2ray(
       onStatusChanged: (status) {
-        final state = status.state;
-        if (state == 'Connected' || state == 'connected') {
+        final state = status.state.toUpperCase();
+        if (state == 'CONNECTED') {
           _emit(VpnStatusData(
             status: VpnStatus.connected,
             message: 'Connected',
-            delay: status.delay,
+            duration: status.duration,
             uploadSpeed: status.uploadSpeed,
             downloadSpeed: status.downloadSpeed,
+            upload: status.upload,
+            download: status.download,
           ));
-        } else if (state == 'Connecting' || state == 'connecting') {
+        } else if (state == 'CONNECTING') {
           _emit(VpnStatusData(
             status: VpnStatus.connecting,
             message: 'Connecting...',
           ));
-        } else if (state == 'Disconnecting' || state == 'disconnecting') {
+        } else if (state == 'DISCONNECTING') {
           _emit(VpnStatusData(
             status: VpnStatus.disconnecting,
             message: 'Disconnecting...',
@@ -137,18 +141,7 @@ class VpnService {
     }
   }
 
-  /// Toggle VPN connection
-  Future<void> toggle(String? currentLink) async {
-    if (_current.status == VpnStatus.connected ||
-        _current.status == VpnStatus.connecting) {
-      await disconnect();
-    } else if (currentLink != null) {
-      await connect(currentLink);
-    }
-  }
-
   void dispose() {
-    _statsTimer?.cancel();
     _controller.close();
   }
 }
