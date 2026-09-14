@@ -19,26 +19,16 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-    }
-
-    splits {
-        abi {
-            enable = true
-            reset()
-            include("x86_64", "armeabi-v7a", "arm64-v8a")
-            universalApk = true
+        ndk {
+            abiFilters.add("x86_64")
+            abiFilters.add("armeabi-v7a")
+            abiFilters.add("arm64-v8a")
         }
     }
 
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("debug")
-            ndk {
-                abiFilters.add("x86_64")
-                abiFilters.add("armeabi-v7a")
-                abiFilters.add("arm64-v8a")
-                debugSymbolLevel = "FULL"
-            }
         }
     }
 }
