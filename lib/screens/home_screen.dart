@@ -1,0 +1,250 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/server_provider.dart';
+import '../providers/vpn_provider.dart';
+import 'servers_screen.dart';
+import 'settings_screen.dart';
+import '../widgets/connect_button.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final serverProvider = context.watch<ServerProvider>();
+    final vpn = context.watch<VpnProvider>();
+    final selectedServer = serverProvider.selectedServer;
+
+    return Scaffold(
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            // Top bar with premium badge and settings
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.shield_outlined, color: Colors.white, size: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'V2Ray VPN',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        if (auth.isPremium)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.star, size: 14, color: Colors.white),
+                                SizedBox(width: 4),
+                                Text(
+                                  'PREMIUM',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                            );
+                          },
+                          icon: const Icon(Icons.settings_outlined, color: Color(0xFFB0B8C4)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Main content
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Column(
+                children: [
+                  const Spacer(flex: 2),
+
+                  // Connection status text
+                  Text(
+                    vpn.isConnected
+                        ? 'Connected'
+                        : vpn.isConnecting
+                            ? 'Connecting...'
+                            : 'Disconnected',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                      color: vpn.isConnected
+                          ? const Color(0xFF00B894)
+                          : const Color(0xFFB0B8C4),
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // Big circular connect button
+                  ConnectButton(
+                    isConnected: vpn.isConnected,
+                    isConnecting: vpn.isConnecting,
+                    onPressed: () {
+                      if (selectedServer != null) {
+                        if (vpn.isConnected || vpn.isConnecting) {
+                          vpn.disconnect();
+                        } else {
+                          vpn.connect(selectedServer.uri);
+                        }
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please select a server first'),
+                            backgroundColor: Color(0xFFFF6B6B),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // Delay / ping display
+                  if (vpn.isConnected && vpn.delay != null)
+                    Text(
+                      '${vpn.delay}ms',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF8B95A5),
+                      ),
+                    ),
+
+                  const Spacer(flex: 1),
+
+                  // Selected server card
+                  if (selectedServer != null)
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const ServersScreen()),
+                        );
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 20),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF161B22),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(0xFF2D333B),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1C2128),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  selectedServer.country,
+                                  style: const TextStyle(fontSize: 24),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    selectedServer.name,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${selectedServer.protocol.toUpperCase()} • ${selectedServer.isPremium ? "Premium" : "Free"}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF8B95A5),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(
+                              Icons.chevron_right,
+                              color: Color(0xFF8B95A5),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 16),
+
+                  // Change server button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const ServersScreen()),
+                        );
+                      },
+                      icon: const Icon(Icons.dns_outlined),
+                      label: const Text('Change Server'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(50),
+                      ),
+                    ),
+                  ),
+
+                  const Spacer(flex: 1),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
