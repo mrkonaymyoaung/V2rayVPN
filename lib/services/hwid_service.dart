@@ -12,7 +12,9 @@ class HwidService {
     try {
       final hwid = await _channel.invokeMethod<String>('getHwid');
       return hwid ?? '0000-0000-0000-0000';
-    } on PlatformException {
+    } catch (e) {
+      // Catch all exceptions including MissingPluginException
+      // which does NOT extend PlatformException
       return '0000-0000-0000-0000';
     }
   }

@@ -113,7 +113,7 @@ class VpnService {
         remark: parser.remark,
         config: parser.getFullConfiguration(),
         blockedApps: null,
-        bypassSubnets: null,
+        bypassSubnets: ['0.0.0.0/0', '::/0'],
         proxyOnly: false,
       );
     } catch (e) {
